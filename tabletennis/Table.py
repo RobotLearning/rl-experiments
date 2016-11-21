@@ -1,4 +1,3 @@
-from samba import net
 u'''
 Created on Nov 18, 2016
 
@@ -14,12 +13,12 @@ values, since table doesn't really do anything). Table contains a net class!
 import numpy as np
 
 class Table(object):
-    u'''
+    '''
     Table class containing table parameters [height, length, etc.]
     '''
 
     def __init__(self, params = None):
-        u'''
+        '''
         Constructor initializing the table. 
         
         We set the center of the table as a global origin,
@@ -46,14 +45,14 @@ class Table(object):
         self.CFTY = coeffs[1]
         
 class Net(object):
-    u'''
+    '''
     Net class belonging to a table.
     Contains net parameters [length, height, etc.]
     as well as a nominal reflection law
     '''
     
     def __init__(self, params = None):
-        u'''
+        '''
         Constructor initializing the net parameters.
         '''
         self.height = 0.144
@@ -63,10 +62,16 @@ class Net(object):
         self.set_restitution_coeff(0.05)
         
     def set_restitution_coeff(self, coeff = 0.05):
-        u'''
+        '''
         Sets the restitution coefficient of the net.
         For ball hitting the net during simulation.
         '''
         
         assert(coeff < 0.1)
         self.restitution = coeff
+        
+# Test functions here for simulating with mlab
+def sim_table():
+    '''
+    Simulates the table using 3D graphics of mlab
+    '''        

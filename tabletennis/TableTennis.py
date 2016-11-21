@@ -13,7 +13,7 @@ from tabletennis.Robot import Robot
 from tabletennis.Ball import Ball
 
 class TableTennis(object):
-    u'''
+    '''
     Table tennis 3D class for making table tennis animations.
     
     @todo: Extend for 2 robots playing against each other!
@@ -21,7 +21,7 @@ class TableTennis(object):
 
 
     def __init__(self):
-        u'''
+        '''
         Constructor. Set sampling time (dt).
         
         Sets the score to zero: for now the score is the number of successful
@@ -34,7 +34,7 @@ class TableTennis(object):
         self.score = 0
         
     def set_robot(self, robot):
-        u''' 
+        ''' 
         Set robot playing table tennis. 
         
         @todo: Extend for multiple robots.         
@@ -45,7 +45,7 @@ class TableTennis(object):
         self.robot = robot
         
     def set_ball(self, ball):
-        u'''
+        '''
         Set ball for the table tennis simulation.
         
         @todo: Check if ball is instance of ball3d.
@@ -54,7 +54,7 @@ class TableTennis(object):
         self.ball = ball
         
     def set_samp_time(self, samp_time = 0.01):
-        u'''
+        '''
         Set sampling time (dt).
         
         Checks if sampling time is within range [0,0.1]
@@ -68,14 +68,14 @@ class TableTennis(object):
         self.dt = samp_time
         
     def set_table(self, options):
-        u'''
+        '''
         Set the table specifics here.
         '''
         
         self.table = options
         
     def set_vision(self, options):
-        u'''
+        '''
         Set the details of how we perceive the environment:
         ball state.        
         
@@ -84,7 +84,7 @@ class TableTennis(object):
         self.vision = options
         
     def practice(self, num_times = 1, max_sim_time = 3.0):
-        u'''
+        '''
         Practice playing table tennis with a robot and a ball machine. 
         
         The input parameter num_times indicates the number of solo trials.
@@ -101,7 +101,7 @@ class TableTennis(object):
         print('Landed %d out of %d' % self.score, num_times)    
             
     def play_one_turn(self, max_sim_time):
-        u'''
+        '''
         The robot will try to hit the ball (only once!).
         
         Argument indicates the maximum simulation time that will be spent
@@ -131,7 +131,7 @@ class TableTennis(object):
             time_passed += dt
             
     def plan(self, ball_estimate):
-        u'''        
+        '''        
         Plan using a Virtual Planning Plane (VPP) set to the net y-position.
         
         Using a finite state machine to plan when to hit and to stop.        
@@ -157,7 +157,7 @@ class TableTennis(object):
         return q,qd
         
     def calc_opt_traj(self, est):
-        u'''
+        '''
         
         Calculate optimal hitting and returning trajectories
         using 3rd order polynomials.
@@ -172,7 +172,7 @@ class TableTennis(object):
         return tau # torques
             
     def get_ball_estimate(self):
-        u'''
+        '''
         Get ball estimate from the vision system.
         
         '''

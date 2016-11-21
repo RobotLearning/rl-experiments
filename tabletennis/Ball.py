@@ -10,21 +10,24 @@ from scipy import integrate
 from tabletennis.Table import Table 
 
 class Ball(object):
-    u'''
+    '''
     Ball class used to simulate table tennis with a robot
     '''
 
-    def __init__(self, params):
-        u'''
+    def __init__(self, dt, params):
+        '''
         Constructor
         
         @todo:  Check that the params dictionary contains the right
         keys
         '''
+        
+        #assert(dt < 0.02 and dt > 0.0, 'please provide a small time step dt!')
+        self.dt = dt
         self.params = params
         
     def set_state(self, pos, vel):
-        u'''
+        '''
         Set the initial ball state: initial ball position and velocity.
         
         '''      
@@ -32,7 +35,7 @@ class Ball(object):
         self.state = np.concatenate([pos,vel]) 
         
     def ball_flight_model(self, xdot):
-        u'''
+        '''
         
         Computes the accelerations given the current position and velocity
         of the ball. 
@@ -50,7 +53,7 @@ class Ball(object):
         return xddot
     
     def ball_fun(self,state,time):
-        u'''
+        '''
         
         Computes the velocities and accelerations given current positions
         and velocities.
@@ -63,25 +66,39 @@ class Ball(object):
         dy = np.concatenate([vel,self.ball_flight_model(vel)])
         return dy
         
-    def evolve(self, dt, table, racket):
-        u'''
-        Evolve the ball for dt seconds. 
+    def evolve(self, t_evolve, table, racket):
+        '''
+        Evolve the ball for dt seconds.
+        TODO: implement Runge Kutta 4 integration!
+        so far using Symplectic Euler! 
         
         Checks interaction with table, net, racket and ground.
         '''
         
         fun = self.ball_fun
-        time = np.array([0, dt])
-        sol = integrate.odeint(fun, self.state, time)    
-        next_state = sol[-1,:]
+        n_evolve = int(t_evolve/self.dt)
+        #time = np.linspace(0,t_evolve,int(t_evolve/self.dt))
+        #time = np.array([0, t_evolve])
         
-        # check contact with table, net, racket, ground
-        next_state = self.check_contact(dt, next_state, table, racket)
+        _DX_ = 3 # index of x-velocity
+        next_state = self.state.copy()
+        for i in range(n_evolve): #time:
+            # integrating with Symplectic Euler
+            next_state[_DX_:] = next_state[_DX_:] + \
+            self.dt * self.ball_flight_model(self.state[_DX_:])
+            # integrate the positions
+            next_state[:_DX_] = next_state[:_DX_] + \
+            self.dt * next_state[_DX_:]
+            # check contact with table, net, racket, ground
+            next_state = self.check_contact(next_state, table, racket)                    
+            self.state = next_state.copy()
         
-        self.state = next_state
+        #sol = integrate.odeint(fun, self.state, time)
+        #next_state = sol[-1,:]
         
-    def check_contact(self, dt, next_state, table, racket):
-        u'''
+        
+    def check_contact(self, next_state, table, racket):
+        '''
         Checks contact with the table, racket, net and floor,
         in that order.
         
@@ -90,13 +107,13 @@ class Ball(object):
         
         '''
         
-        next_state = self.check_contact_table(dt, next_state, table)
+        next_state = self.check_contact_table(next_state, table)
         #TODO:
         
         return next_state
         
-    def check_contact_table(self, dt, next_state, table):
-        u'''
+    def check_contact_table(self, next_state, table):
+        '''
         Checks contact with table by checking if ball would cross
         the table in z-direction if it moved freely.
         
@@ -108,21 +125,24 @@ class Ball(object):
         
         _Z_ = 2
         _Y_ = 1
+        _X_ = 0
         _DX_ = 3
         z_next = next_state[_Z_]
         y_next = next_state[_Y_]
+        x_next = next_state[_X_]
         z_cur = self.state[_Z_]
         # check if ball would cross the table - in z direction
-        cross = (np.sign(z_next - table.z) is not (np.sign(z_cur - table.z)))
+        cross = (np.sign(z_next - table.z) != (np.sign(z_cur - table.z)))
         # check if ball is over the table
-        over = (np.abs(y_next - table.center_y) < table.length/2.0)
+        over = (np.abs(y_next - table.center_y) < table.length/2.0) and \
+                (np.abs(x_next - table.center_x) < table.width/2.0)
         
         if cross and over:
             # find bounce time
             # doing bisection to determine bounce time
             tol = 1e-4
             dt1 = 0.0
-            dt2 = dt # for bracketing
+            dt2 = self.dt # for bracketing
             bounce_state = self.state.copy()
             dt_bounce = 0.0
             while np.abs(bounce_state[_Z_] - table.z) > tol:
@@ -141,7 +161,7 @@ class Ball(object):
                     
             # apply rebound model to velocities
             bounce_state[_DX_:] = self.rebound_model(table, bounce_state[_DX_:]) 
-            dt = dt - dt_bounce
+            dt = self.dt - dt_bounce
             # integrate for the remaining time dt -
             next_state[_DX_:] = bounce_state[_DX_:] + \
                     dt * self.ball_flight_model(bounce_state[_DX_:])
@@ -151,7 +171,7 @@ class Ball(object):
         return next_state    
         
     def rebound_model(self, table, xdot):
-        u'''
+        '''
         Apply reflection law on the velocities.
         '''
         
@@ -160,38 +180,41 @@ class Ball(object):
              
         
         
-# testing Ball class        
+# Test function here for the Ball class
 
-def test_ball_freefall(dt = 0.2):
-    u'''
+def test_ball_freefall(t_evolve = 0.2):
+    '''
     Testing whether ball.state returns us the right position 
     and velocity values after evolving for dt seconds
-    
-    
+
+
     '''
+    dt = 0.01
     C = 0.1414
     g = -9.81
     params = [C,g]        
-    ball = Ball(params)   
+    ball = Ball(dt, params)
+    table = Table()   
     init_pos = np.ones(3)
     init_vel = np.zeros(3)
     ball.set_state(init_pos, init_vel)
-    ball.evolve(dt, [], [])
+    ball.evolve(t_evolve, table, [])
     print('Evolving state for %f seconds' % dt)
-    print('Ball pos and vel:')
-    print(ball.state)     
+    print('Ball pos and vel:')    
+    np.set_printoptions(precision=3)
+    print(ball.state)
     
 def test_ball_bounce(t_evolve = 1.0):
-    u'''
+    '''
     Testing whether ball bounces properly on the table
     
-    '''    
-    from tabletennis.Table import Table
+    ''' 
     
+    dt = 0.01
     C = 0.1414
     g = -9.81
     params = [C,g]        
-    ball = Ball(params)  
+    ball = Ball(dt,params)  
     table = Table()
     init_pos = np.array([0.8197, -1.62, 0.32])
     init_vel = np.array([-2.2230, 5.7000, 2.8465])
@@ -199,4 +222,8 @@ def test_ball_bounce(t_evolve = 1.0):
     ball.evolve(t_evolve, table, [])
     print('Evolving state for %f seconds' % t_evolve)
     print('Ball pos and vel:')
+    np.set_printoptions(precision=3)
     print(ball.state)   
+    
+if __name__ == '__main__':
+    test_ball_bounce(1.0)    
