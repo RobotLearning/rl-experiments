@@ -71,7 +71,61 @@ class Net(object):
         self.restitution = coeff
         
 # Test functions here for simulating with mlab
-def sim_table():
+def test_sim_table():
     '''
-    Simulates the table using 3D graphics of mlab
+    Simulates 2D-table using 3D graphics of mlab
     '''        
+    
+    from mayavi import mlab
+
+    table = Table()
+    xmin = table.center_x - table.width/2.0
+    xmax = table.center_x + table.width/2.0
+    ymin = table.center_y - table.length/2.0
+    ymax = table.center_y + table.length/2.0
+    xnum = np.complex(0,2)
+    ynum = np.complex(0,2)
+    x, y = np.mgrid[xmin:xmax:xnum, ymin:ymax:ynum]
+    z = np.zeros(x.shape)
+    green = (0, 0.7, 0.3)
+    s = mlab.surf(x, y, z, warp_scale = 'auto', color = green)
+    
+def test_sim_3d_table():
+    '''
+    Renders a 3d mesh using table coordinates.
+    '''
+
+    from mayavi import mlab
+
+    table = Table()
+    xmin = table.center_x - table.width/2.0
+    xmax = table.center_x + table.width/2.0
+    ymin = table.center_y - table.length/2.0
+    ymax = table.center_y + table.length/2.0
+    table.thickness = 0.10
+    zmin = table.z - table.thickness
+    zmax = table.z
+    
+    num = np.complex(0,2) # number of points to include per axis
+    x,y = np.mgrid[xmin:xmax:num, ymin:ymax:num]
+    xx = np.c_[x,x]
+    yy = np.c_[y,y]
+    z = np.c_[zmin * np.ones(x.shape),zmax * np.ones(x.shape)]
+    
+    green = (0, 0.7, 0.3)
+    
+    face_idx = [[1, 2, 3, 4], 
+              [5, 6, 7, 8], 
+              [1, 2, 6, 5], 
+              [2, 3, 7, 6], 
+              [3, 4, 8, 7], 
+              [4, 1, 5, 8]]
+    face = np.asarray(face_idx)
+    
+    for i in range(len(face_idx)):
+        x_face = xx[:,face[i]-1]
+        y_face = yy[:,face[i]-1]
+        z_face = z[:,face[i]-1]
+        mlab.mesh(x_face, y_face, z_face, color = green)    
+
+test_sim_3d_table()
