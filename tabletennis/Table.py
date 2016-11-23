@@ -97,6 +97,7 @@ def test_sim_3d_table():
 
     from mayavi import mlab
 
+    # get the coordinates
     table = Table()
     xmin = table.center_x - table.width/2.0
     xmax = table.center_x + table.width/2.0
@@ -106,14 +107,21 @@ def test_sim_3d_table():
     zmin = table.z - table.thickness
     zmax = table.z
     
-    num = np.complex(0,2) # number of points to include per axis
-    x,y = np.mgrid[xmin:xmax:num, ymin:ymax:num]
-    xx = np.c_[x,x]
-    yy = np.c_[y,y]
-    z = np.c_[zmin * np.ones(x.shape),zmax * np.ones(x.shape)]
+    # make the points of the rectangular grid
+    # first make the indices
+    z_idx = np.r_[np.zeros(4),np.ones(4)]
+    y_idx = np.array([0,1,1,0])
+    y_idx = np.r_[y_idx,y_idx]
+    x_idx = np.array([0,0,1,1])
+    x_idx = np.r_[x_idx,x_idx]
+    # now make the 3d points
+    pts_x = xmin + (xmax-xmin) * x_idx
+    pts_y = ymin + (ymax-ymin) * y_idx
+    pts_z = zmin + (zmax-zmin) * z_idx
     
     green = (0, 0.7, 0.3)
     
+    # now construct the faces    
     face_idx = [[1, 2, 3, 4], 
               [5, 6, 7, 8], 
               [1, 2, 6, 5], 
@@ -121,11 +129,11 @@ def test_sim_3d_table():
               [3, 4, 8, 7], 
               [4, 1, 5, 8]]
     face = np.asarray(face_idx)
-    
+    # draw the faces one by one     
     for i in range(len(face_idx)):
-        x_face = xx[:,face[i]-1]
-        y_face = yy[:,face[i]-1]
-        z_face = z[:,face[i]-1]
+        x_face = pts_x[face[i]-1].reshape(2,2)
+        y_face = pts_y[face[i]-1].reshape(2,2)
+        z_face = pts_z[face[i]-1].reshape(2,2)
         mlab.mesh(x_face, y_face, z_face, color = green)    
 
 test_sim_3d_table()
