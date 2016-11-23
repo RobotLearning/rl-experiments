@@ -103,14 +103,14 @@ def test_sim_3d_table():
     xmax = table.center_x + table.width/2.0
     ymin = table.center_y - table.length/2.0
     ymax = table.center_y + table.length/2.0
-    table.thickness = 0.10
+    # table.thickness = 0.10
     zmin = table.z - table.thickness
     zmax = table.z
     
     # make the points of the rectangular grid
     # first make the indices
     z_idx = np.r_[np.zeros(4),np.ones(4)]
-    y_idx = np.array([0,1,1,0])
+    y_idx = np.array([0,1,0,1])
     y_idx = np.r_[y_idx,y_idx]
     x_idx = np.array([0,0,1,1])
     x_idx = np.r_[x_idx,x_idx]
@@ -124,10 +124,10 @@ def test_sim_3d_table():
     # now construct the faces    
     face_idx = [[1, 2, 3, 4], 
               [5, 6, 7, 8], 
-              [1, 2, 6, 5], 
-              [2, 3, 7, 6], 
-              [3, 4, 8, 7], 
-              [4, 1, 5, 8]]
+              [1, 2, 5, 6], 
+              [3, 1, 7, 5], 
+              [3, 4, 7, 8], 
+              [4, 2, 8, 6]]
     face = np.asarray(face_idx)
     # draw the faces one by one     
     for i in range(len(face_idx)):
@@ -135,5 +135,3 @@ def test_sim_3d_table():
         y_face = pts_y[face[i]-1].reshape(2,2)
         z_face = pts_z[face[i]-1].reshape(2,2)
         mlab.mesh(x_face, y_face, z_face, color = green)    
-
-test_sim_3d_table()

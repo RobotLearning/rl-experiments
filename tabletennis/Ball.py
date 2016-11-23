@@ -225,5 +225,25 @@ def test_ball_bounce(t_evolve = 1.0):
     np.set_printoptions(precision=3)
     print(ball.state)   
     
-if __name__ == '__main__':
-    test_ball_bounce(1.0)    
+def test_ball_sim():
+    '''
+    Drawing the ball and animating with mlab
+    '''
+    
+    from mayavi import mlab
+    import time
+    
+    # to prevent error messages
+    import vtk
+    output = vtk.vtkFileOutputWindow()
+    output.SetFileName("log.txt")
+    vtk.vtkOutputWindow().SetInstance(output)
+    
+    p = np.array([0.8197, -1.62, 0.32])
+    #init_vel = np.array([-2.2230, 5.7000, 2.8465])
+    orange = (0.9100, 0.4100, 0.1700)
+    s = mlab.points3d(p[0],p[1],p[2],color = orange, scale_factor = 0.05)
+    for i in range(10):
+        #time.sleep(0.2)
+        p = p + 0.01
+        s.mlab_source.set(x = p[0],y = p[1], z = p[2])
