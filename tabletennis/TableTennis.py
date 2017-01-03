@@ -9,7 +9,7 @@ Table tennis class for making table tennis animations.
 
 '''
 
-from tabletennis.Robot import Robot
+from robots.Robot import Robot
 from tabletennis.Ball import Ball
 
 class TableTennis(object):
