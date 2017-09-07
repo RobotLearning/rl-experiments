@@ -10,7 +10,7 @@ def check_mc_conv():
     ''' Check markov chain eigenvector convergence with an example'''
     
     num_states = 5
-    num_iter = 50
+    num_iter = 500  
     
     M = np.random.rand(num_states,num_states)    
     p = np.random.rand(num_states,1)
