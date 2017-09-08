@@ -9,7 +9,7 @@ in the literature.
 '''
 
 import numpy as np
-from RL.Policies import LinearPolicy 
+from RL.Policies import LinearPolicy
 from robots.Linear import Linear
 
 class Reinforce(object):
@@ -195,3 +195,6 @@ def test_reinforce():
     x0 = np.zeros(dimx)
     # learn a policy and give verbose output
     rl.learn(1e-3, x0, lin, True) 
+    
+print('Testing REINFORCE on a simple 1d problem with horizon = 10, rollouts = 5...')    
+test_reinforce()

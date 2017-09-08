@@ -23,3 +23,7 @@ def random_walk_sim():
     plt.figure(figsize = (4,3))
     plt.plot(t, np.sqrt(mean_sq_distance), 'b.', t, np.sqrt(t), 'r-')
     plt.ylabel(r"$\sqrt{\langle (\delta x)^2 \rangle}$")
+    plt.savefig('randomwalk.png')
+    
+print('Simulating many random walks...')
+random_walk_sim()    

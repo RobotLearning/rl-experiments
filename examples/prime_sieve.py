@@ -24,7 +24,7 @@ def rough_prime_sieve(n):
         
     print(np.nonzero(is_prime))
     
-def optim_prime_sieven(n):
+def optim_prime_sieve(n):
     ''' Slightly optimized prime sieve, see rough_prime_sieve'''
     
     is_prime = np.ones((n,), dtype = bool)
