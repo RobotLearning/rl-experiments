@@ -25,6 +25,7 @@ class Reinforce(object):
         self.reward = reward
         self.horizon = horizon
         self.rolloutsize = num_rollouts
+        self.alpha = 0.0001
         
     def learn(self, tol, x0, model, verbose):
         '''
@@ -44,10 +45,9 @@ class Reinforce(object):
             D = self.rollouts(x0, model)
             # estimate gradient
             grad = self.estimate_gradient(D)
-            # do line search and update gradient
-            alpha = self.line_search(grad)
+            # gradient descent
             theta_last = self.policy.theta.copy()
-            self.policy.theta += alpha * grad
+            self.policy.theta += self.alpha * grad
             if verbose:
                 print('Iteration %d' %iter_num)
                 print('Average reward of trial: %f' %(np.sum(D['rewards'])/self.rolloutsize))
@@ -146,20 +146,6 @@ class Reinforce(object):
                 derJ[h] += sum_der_log_policy * (R[i] - baseline[h]) / N
             
         return derJ
-    
-    def line_search(self, grad):
-        '''
-        Typical line search procedure for policy gradient based methods.
-        
-        Checking Wolfe conditions.
-        
-        '''
-        
-        #TODO: implement Wolfe condition checking!
-        
-        alpha = 0.0001
-        
-        return alpha
         
     
 def test_reinforce():
@@ -167,34 +153,33 @@ def test_reinforce():
     Testing the REINFORCE algorithm using a linear model class.
     '''
     
-    dimx = 2
-    dimy = 1
-    dimu = 1
     # dimensions of the linear system, state, observation and control resp.
-    dims = {'x': dimx, 'y': dimy, 'u': dimu}
+    dims = {'x': 2, 'y': 1, 'u': 1}
     # noise covariance, process and measurement (observation) respectively
-    eps = {'observation': 0.1*np.eye(dimy), 'process': 0.0*np.eye(dimx)}  
+    eps = {'observation': 0.1*np.eye(dims['y']), 'process': 0.0*np.eye(dims['x'])}  
     # model matrices, A, B and C (no D given)
+    a = 0.9 # damping constant
     A = np.array([[0, 1], \
-                  [1.8, -0.81]])
+                  [-a*a, -2*a]])
     B = np.array([[0], [1]])
-    C = np.array([0, 1])
+    C = np.array([1, 0])
     models = {'A': A, 'B': B, 'C': C}    
     # initialize the linear model class
     lin = Linear(dims, eps, models)
     
     # create a policy
-    theta = np.array([0.1])
-    var_policy = 0.1*np.eye(dimu)
+    theta = np.array([-0.1])
+    var_policy = 0.001*np.eye(dims['u'])
     features = lambda x: x
     policy = LinearPolicy(1,features,var_policy,theta)
     xdes = 1
     reward = lambda x,u: -(x[:,-1] - xdes)**2
     
     rl = Reinforce(policy, reward, 10, 5)
-    x0 = np.zeros(dimx)
+    x0 = np.zeros(dims['x'])
     # learn a policy and give verbose output
     rl.learn(1e-3, x0, lin, True) 
     
-print('Testing REINFORCE on a simple 1d problem with horizon = 10, rollouts = 5...')    
-test_reinforce()
+if __name__ == "__main__":
+    print('Testing REINFORCE on a simple 1d problem with horizon = 10, rollouts = 5...')    
+    test_reinforce()
