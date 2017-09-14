@@ -101,14 +101,14 @@ def test_linear():
     a = 0.9
     A = np.array([[0, 1], \
                   [-a*a, -2*a]])
-    B = np.array([[0], [1]])
+    B = np.array([0, 1])
     C = np.array([1, 0])
     models = {'A': A, 'B': B, 'C': C}    
     # initialize the linear model class
     lin = Linear(dims, eps, models)
     
     # create a policy
-    theta = np.array((0,0)) #-np.array([0.26574256])
+    theta = np.array((0.05,-0.27)) #-np.array([0.26574256])
     #var_policy = 0.1*np.eye(dimu)
     features = lambda x: np.concatenate(([1],[x - xdes]))
     policy = LinearPolicy(1,features,var = None,theta0 = theta)

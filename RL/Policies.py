@@ -56,7 +56,7 @@ class LinearPolicy(object):
         
         u = np.dot(self.theta,self.features(x))
         if self.var is not None:
-            noise = np.random.randn(dimu)
+            noise = np.random.randn(len(self.theta))
             u += np.dot(np.linalg.cholesky(self.var),noise)
                        
         return u
