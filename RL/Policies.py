@@ -26,7 +26,7 @@ class LinearPolicy(object):
         Variance is fixed for the Gaussian distribution (stochastic policy).
         '''
         
-        self.dim = dim # dimension of the features
+        self.dim = dim # dimension of the parameters
         self.features = features
         if theta0 is not None:
             self.theta = theta0
@@ -42,7 +42,7 @@ class LinearPolicy(object):
         '''
         val = np.linalg.solve(self.var, \
                         u - np.dot(self.theta,self.features(x)))
-        return self.features(x) * val
+        return np.dot(val,self.features(x))
 
 
     def feedback(self, x, t):
@@ -56,12 +56,12 @@ class LinearPolicy(object):
         
         u = np.dot(self.theta,self.features(x))
         if self.var is not None:
-            noise = np.random.randn(len(self.theta))
+            noise = np.random.randn(np.size(u))
             u += np.dot(np.linalg.cholesky(self.var),noise)
                        
         return u
     
-def test_feedback():    
+def test_feedback():
     '''
     Testing convergence to a desired set position 
     for a critically damped system with feedback and const. feedforward inputs 
@@ -69,31 +69,34 @@ def test_feedback():
     from robots.Linear import Linear
     
     # dimensions of the linear system, state, observation and control resp.
-    dims = {'x': 2, 'y': 1, 'u': 1}
+    dims = {'x': 2, 'y': 2, 'u': 1}
     # noise covariance, process and measurement (observation) respectively
     eps = {'observation': 0.0, 'process': 0.0}  
     
     # settings for the differential equation and pd-control parameters
     a = 0.9 # damping constant
-    xdes = 1.0 # desired set point
-    kd = 0.1
-    kp = kd*kd/4 + a*kd
-    kc = -a*a*xdes
+    xdes = np.array([1.0]) # desired set point
+    kd = 0.0
+    kp = 0.0 
+    kc = 0.01*a*a*xdes[0]
     x0 = np.zeros(dims['x'])
     
     A = np.array([[0, 1], \
                   [-a*a, -2*a]])
-    B = np.array([[0], [1]])
-    C = np.eye(2)
+    B = np.array([0, 1])
+    C = np.eye(2) #np.array([1, 0])
     models = {'A': A, 'B': B, 'C': C}    
     # initialize the linear model class
     lin = Linear(dims, eps, models)
-    features = lambda x: np.concatenate(([1],x))
+    features = lambda x: np.concatenate((x,[1]))
     theta = np.array((kp,kd,kc))
     policy = LinearPolicy(1,features,var = None, theta0 = theta)
     [x,u] = lin.rollout(policy, x0, 10)
-    reward = lambda x,u: -(x[:,-1] - xdes)**2
-    print('Reward for the trajectory is:', reward(x,u))
+    reward = lambda x,u: -(x[0,-1] - xdes)**2
+    print('Reward for the trajectory is:')
+    print(reward(x,u))
+    print('Trajectory:')
+    print(x)
     
 if __name__ == "__main__":
     print('Testing feedback that makes system critically damped around xdes...')

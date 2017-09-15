@@ -83,6 +83,32 @@ class Linear(object):
         
         Y[:,-1] = self.observe_state()
         return Y, U
+    
+def dynamic_riccati(Pnext, Q, R, A, B):
+    M = np.dot(Pnext,B)
+    N = np.dot(A.transpose(),M)
+    S = Q + np.dot(A.transpose(),np.dot(Pnext,A))
+    T = R + np.dot(B.transpose(),M)
+    if np.size(T) == 1:
+        return S - (1/T)*N*N.transpose()
+    else:
+        return S - N*np.linalg.solve(T,N.transpose())
+
+
+def iterate_riccati(Qf, Q, R, A, B, N):
+    P = Qf
+    for i in range(N):
+        P = dynamic_riccati(P,Q,R,A,B)
+    return P
+
+def compute_init_lqr(Qf,Q,R, A,B,N):
+    P = iterate_riccati(Qf,Q,R,A,B,N)
+    K = np.dot(B.transpose(),np.dot(P,B))
+    if np.size(K) == 1:
+        K = -(1/K) * np.dot(B.transpose(),np.dot(P,A))
+    else:
+        K = -np.linalg.solve(K, np.dot(B.transpose(),np.dot(P,A)))
+    return K
 
 def test_linear():
     '''
@@ -90,34 +116,43 @@ def test_linear():
     '''
     
     dimx = 2
-    dimy = 1
-    dimu = 1
-    xdes = 1
+    dimy = 2
+    dimu = 2
+    xdes = np.array([0,0])
+    x0 = np.array([2,1])
+    N = 10
     # dimensions of the linear system, state, observation and control resp.
     dims = {'x': dimx, 'y': dimy, 'u': dimu}
     # noise covariance, process and measurement (observation) respectively
-    eps = {'observation': 0.0*np.eye(dimy), 'process': 0.0*np.eye(dimx)}  
+    eps = {'observation': 0.0*np.eye(dimy), 'process': 0.0*np.eye(dimx)}
     # model matrices, A, B and C (no D given)
     a = 0.9
     A = np.array([[0, 1], \
                   [-a*a, -2*a]])
-    B = np.array([0, 1])
-    C = np.array([1, 0])
-    models = {'A': A, 'B': B, 'C': C}    
+    B = np.eye(2) #np.array([0, 1])
+    C = np.eye(2) #np.array([1, 0])
+    models = {'A': A, 'B': B, 'C': C}
     # initialize the linear model class
     lin = Linear(dims, eps, models)
     
-    # create a policy
-    theta = np.array((0.05,-0.27)) #-np.array([0.26574256])
-    #var_policy = 0.1*np.eye(dimu)
-    features = lambda x: np.concatenate(([1],[x - xdes]))
-    policy = LinearPolicy(1,features,var = None,theta0 = theta)
-
-    reward = lambda x,u: -(x[:,-1] - xdes)**2
+    # compute initial LQR policy
+    Qf = np.eye(2)
+    Q = np.zeros((2,2)) #np.eye(2)
+    R = np.zeros(1)
+    K = compute_init_lqr(Qf, Q, R, A, B, N)
     
-    Y, U = lin.rollout(policy)
+    # create a policy    
+    # var_policy = 0.1*np.eye(dimu)
+    features = lambda x: (x - xdes)
+    policy = LinearPolicy(1,features,var = None,theta0 = K)
+    # only a final cost/reward
+    reward = lambda x,u: -np.dot((x[:,-1]-xdes),np.dot(Qf,x[:,-1]-xdes))
+    
+    Y, U = lin.rollout(policy,x0,N)
     print('State evolution:') 
     print(Y)
+    print('Feedback matrix:')
+    print(K)
     print('Reward is %f' % reward(Y,U))
     
 if __name__ == "__main__":

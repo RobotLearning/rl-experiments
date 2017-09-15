@@ -17,7 +17,7 @@ class Reinforce(object):
     Episodic policy gradient based approach.
     '''
     
-    def __init__(self, policy, reward, horizon, num_rollouts):
+    def __init__(self, policy, reward, horizon, num_rollouts, alpha):
         '''
         Constructor.
         '''
@@ -25,7 +25,7 @@ class Reinforce(object):
         self.reward = reward
         self.horizon = horizon
         self.rolloutsize = num_rollouts
-        self.alpha = 0.0001
+        self.alpha = alpha
         
     def learn(self, tol, x0, model, verbose):
         '''
@@ -153,33 +153,45 @@ def test_reinforce():
     Testing the REINFORCE algorithm using a linear model class.
     '''
     
+    dimx = 4
+    dimy = 4
+    dimu = 2
     # dimensions of the linear system, state, observation and control resp.
-    dims = {'x': 2, 'y': 1, 'u': 1}
+    dims = {'x': dimx, 'y': dimy, 'u': dimu}
     # noise covariance, process and measurement (observation) respectively
-    eps = {'observation': 0.1*np.eye(dims['y']), 'process': 0.0*np.eye(dims['x'])}  
+    eps = {'observation': 1e-4*np.eye(dimy), 'process': 0.0*np.eye(dimx)}
     # model matrices, A, B and C (no D given)
-    a = 0.9 # damping constant
-    A = np.array([[0, 1], \
-                  [-a*a, -2*a]])
-    B = np.array([[0], [1]])
-    C = np.array([1, 0])
-    models = {'A': A, 'B': B, 'C': C}    
+    
+    A = np.random.rand(dimx,dimx)
+    B = np.random.rand(dimx,dimu)
+    C = np.eye(dimx, dimy)
+    #a = 0.9 # damping constant
+    #A = np.array([[0, 1], \
+    #              [-a*a, -2*a]])
+    #B = np.array([[0], [1]])
+    #C = np.eye(dimy) #np.array([1, 0])
+    
+    models = {'A': A, 'B': B, 'C': C}  
     # initialize the linear model class
     lin = Linear(dims, eps, models)
     
     # create a policy
-    theta = np.array([-0.1])
+    theta = -np.random.rand(dimu,dimy) #np.array([-0.1,-0.1])
     var_policy = 0.001*np.eye(dims['u'])
     features = lambda x: x
-    policy = LinearPolicy(1,features,var_policy,theta)
-    xdes = 1
-    reward = lambda x,u: -(x[:,-1] - xdes)**2
+    policy = LinearPolicy(np.size(theta),features,var_policy,theta)
+    xdes = np.random.randn(dimy)
+    reward = lambda x,u: -np.dot((x[:,-1] - xdes),x[:,-1] - xdes)
     
-    rl = Reinforce(policy, reward, 10, 5)
+    horizon = 10
+    num_rollouts = 50
+    tol = 1e-6
+    alpha = 1e-3
+    rl = Reinforce(policy, reward, horizon, num_rollouts,alpha)
     x0 = np.zeros(dims['x'])
     # learn a policy and give verbose output
-    rl.learn(1e-3, x0, lin, True) 
+    rl.learn(tol, x0, lin, True) 
     
 if __name__ == "__main__":
-    print('Testing REINFORCE on a simple 1d problem with horizon = 10, rollouts = 5...')    
+    print('Testing REINFORCE on a simple 1d problem...')    
     test_reinforce()
